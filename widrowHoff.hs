@@ -8,7 +8,7 @@ wi = [1, 2, 3]
 
 -- identification rate
 r :: Double
-r = 0.02
+r = 0.2
 
 
 -- inner product
