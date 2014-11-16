@@ -11,5 +11,4 @@ end
 
 s = s.chop
 s += "]"
-
-puts s
+File.write("rand.dat", s)
