@@ -3,7 +3,7 @@ import Data.List
 
 -- weight
 wi :: [Double]
-wi = [1, 2, 3]
+wi = [-1.0, -2.0, 1.0]
 
 
 -- identification rate
@@ -15,26 +15,26 @@ r = 0.2
 innerP :: (Num a) => [a] -> [a] -> a
 innerP a b = sum $ zipWith (*) a b
 
-
+--
 calcError :: [Double] -> (Double,[Double]) -> Double
 calcError w xsi
     | fst xsi == 1 = ret - 1
-    | otherwise = ret - 0
+    | otherwise = ret
     where ret = innerP w $ snd xsi
 
-
+-- judge is allowable error
 isEnough :: Double -> Bool
 isEnough x
-    | x < 1 = True
+    | abs x <= 0.1 = True
     | otherwise = False
 
-
+-- update
 wUpdate' :: [Double] -> [(Double, [Double])] -> [Double]
-wUpdate' w xs = zipWith (-) w $ map (*r) $ map ( innerP b ) xp
+wUpdate' w xs = zipWith (-) w $ map ((*r). innerP b ) xp
     where b = map (calcError w) xs
           xp = transpose $ map snd xs
 
-
+-- loop training
 loopT' :: [(Double, [Double])] -> [Double] -> [Double]
 loopT' xs w
     | not $ all isEnough $ map (calcError w ) xs = loopT' xs $ wUpdate' w xs
@@ -79,8 +79,8 @@ main = do
   line <- getLine
   putStrLn "start lerning"
   plotDiscriFunc ( read line :: [(Double,[Double])] ) [Title $ "widrow-hoff: g(x)" ++ rate ++ defaultW, XRange(-10, 10), YRange(-10, 10) ]
-  putStrLn "done!!"
   epspdfPlot "./widrowHoff" $ plotDiscriFunc ( read line :: [(Double,[Double])] )
+  putStrLn "done!!"
   return ()
     where rate = ", identification rate " ++ show r
           defaultW = ", default weight vector " ++ show wi

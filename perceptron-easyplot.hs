@@ -1,14 +1,14 @@
-import Graphics.Gnuplot.Simple
-import Graph
+--import Graphics.Gnuplot.Simple
+import Graphics.EasyPlot
 
 -- weight
 wi :: [Double]
-wi = [1, 2, 3]
+wi = [60, 2, 300]
 
 
 -- identification rate
 r :: Double
-r = 0.5
+r = 1000
 
 
 -- inner product
@@ -70,25 +70,25 @@ classSepa no = filter (\t -> fst t == no)
 
 
 -- plot discriminal function
-plotDiscriFunc :: [(Double,[Double])] -> [Attribute] -> IO()
-plotDiscriFunc xs attributeGraph = plotPathsStyle attributeGraph $ lineStyle ++ class1Style ++ class2Style
-    where lineStyle = [(defaultStyle {lineSpec = CustomStyle [LineTitle "discriminal"]}, discriFuncPoints)]
-          class1Style = [(defaultStyle {plotType = Points, lineSpec = CustomStyle [LineTitle "class 1", PointType 13]}, class1Points)]
-          class2Style = [(defaultStyle {plotType = Points, lineSpec = CustomStyle [LineTitle "class 2", PointType 4]}, class2Points)]
-          discriFuncPoints = zip xaxis $ map (discriFunc xs) xaxis
-          class1Points = data2vecs $ classSepa 1 xs
+plotDiscriFunc :: [(Double,[Double])] -> IO Bool
+plotDiscriFunc xs = plot (PNG "./rand.png") [ Function2D [Title $ "discriminal" ++ rate ++ defaultW , Color Red ] [] (discriFunc xs )
+                          , Data2D [Title "class1", Color Black] [] class1Points
+                          , Data2D [Title "class2", Color Blue] [] class2Points]
+    where class1Points = data2vecs $ classSepa 1 xs
           class2Points = data2vecs $ classSepa (-1) xs
-          xaxis = [-10 .. 10]
+          rate = ", learning rate " ++ show r
+          defaultW = ", default weight vector " ++ show wi
+          func = show a ++ "x" ++ show b
+          a = - (ws !! 1) / (ws !! 2)
+          b = - head ws / (ws !! 2)
+          ws = loopT xs wi
 
-
-main :: IO()
+main :: IO Bool
 main = do
   putStrLn "Please input data"
   line <- getLine
   putStrLn "start lerning"
-  plotDiscriFunc ( read line :: [(Double,[Double])] ) [Title $ "perceptron: g(x)" ++ rate ++ defaultW, XRange(-2, 3), YRange(-3, 3) ]
-  epspdfPlot "./perceptrons" $ plotDiscriFunc ( read line :: [(Double,[Double])] )
+  plotDiscriFunc ( read line :: [(Double,[Double])] )
+  --epspdfPlot "./perceptrons" $ plotDiscriFunc ( read line :: [(Double,[Double])] )
   putStrLn "done!!"
-  return ()
-    where rate = ", learning rate " ++ show r
-          defaultW = ", default weight vector " ++ show wi
+  return True
