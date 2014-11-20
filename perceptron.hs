@@ -1,15 +1,4 @@
-import Graphics.Gnuplot.Simple
-import Graph
-
--- weight
-wi :: [Double]
-wi = [1, 2, 3]
-
-
--- identification rate
-r :: Double
-r = 0.5
-
+import Graphics.EasyPlot
 
 -- inner product
 innerP :: (Num a) => [a] -> [a] -> a
@@ -17,44 +6,43 @@ innerP a b = sum $ zipWith (*) a b
 
 
 -- signature
-sign :: Double -> Double
-sign n
+step :: Double -> Double
+step n
     | n >= 0 = 1
-    | otherwise = -1
+    | otherwise = 0
+
+
+discriFunc :: [Double] -> [Double] -> Double -> Double
+discriFunc w x v = innerP w x - v
+
 
 -- update weight
-wUpdate :: (Double -> Double -> Double) -> [Double] -> [Double] -> [Double]
-wUpdate op w x = zipWith op w $ map (r*) x
-
-
--- training
-train :: [Double] -> (Double, [Double]) -> [Double]
-train w xsi
-    | fst xsi < sign ( innerP w $ snd xsi ) = wUpdate (-) w $ snd xsi
-    | fst xsi > sign ( innerP w $ snd xsi ) = wUpdate (+) w $ snd xsi
-    | otherwise = w
+wUpdate :: Double -> Double -> [Double] -> (Double, [Double]) -> [Double]
+wUpdate r v w xsi = zipWith (+) w $ map (r * (d - y) *) $ snd xsi
+    where d = fst xsi
+          y = step (discriFunc w (snd xsi) v)
 
 
 -- is discriminal sucsess
-isMatch :: [Double] -> (Double, [Double]) -> Bool
-isMatch w xsi
-    | fst xsi == sign ( innerP w $ snd xsi ) = True
+isMatch :: [Double] -> Double -> (Double, [Double]) -> Bool
+isMatch w v xsi
+    | fst xsi == step (discriFunc w (snd xsi) v)  = True
     | otherwise = False
 
 
 -- loop training
-loopT :: [(Double,[Double])] -> [Double] -> [Double]
-loopT xs w
-    | not $ all (isMatch w) xs = loopT xs $ foldl train w xs
+train :: [Double] -> Double -> Double ->  [(Double,[Double])] -> [Double]
+train w r v xs
+    | not $ all (isMatch w v) xs = train (foldl (wUpdate r v) w xs) r v xs
     | otherwise = w
 
 
 -- discriminal function
-discriFunc :: [(Double,[Double])] -> Double -> Double
-discriFunc xs x = a * x + b
+discriFuncP :: [Double] -> Double -> Double -> [(Double,[Double])] -> Double -> Double
+discriFuncP w r v xs x = a * x + b
     where a = - (ws !! 1) / (ws !! 2)
           b = - head ws / (ws !! 2)
-          ws = loopT xs wi
+          ws = train w r v xs
 
 
 -- list of data to vector
@@ -70,25 +58,29 @@ classSepa no = filter (\t -> fst t == no)
 
 
 -- plot discriminal function
-plotDiscriFunc :: [(Double,[Double])] -> [Attribute] -> IO()
-plotDiscriFunc xs attributeGraph = plotPathsStyle attributeGraph $ lineStyle ++ class1Style ++ class2Style
-    where lineStyle = [(defaultStyle {lineSpec = CustomStyle [LineTitle "discriminal"]}, discriFuncPoints)]
-          class1Style = [(defaultStyle {plotType = Points, lineSpec = CustomStyle [LineTitle "class 1", PointType 13]}, class1Points)]
-          class2Style = [(defaultStyle {plotType = Points, lineSpec = CustomStyle [LineTitle "class 2", PointType 4]}, class2Points)]
-          discriFuncPoints = zip xaxis $ map (discriFunc xs) xaxis
-          class1Points = data2vecs $ classSepa 1 xs
-          class2Points = data2vecs $ classSepa (-1) xs
-          xaxis = [-10 .. 10]
+plotDiscriFunc :: [Double] -> Double -> Double -> [(Double,[Double])] -> String -> IO Bool
+plotDiscriFunc wi r v xs ns = plot (PNG ns) [ Function2D [Title $ "discriminal" ++ rate ++ defaultW , Color Red ]
+                                                           [Range (-3) 3] (discriFuncP wi r v xs)
+                                          , Data2D [Title "class1", Color Black] [] class1Points
+                                          , Data2D [Title "class0", Color Blue] [] class0Points]
+    where class1Points = data2vecs $ classSepa 1 xs
+          class0Points = data2vecs $ classSepa 0 xs
+          rate = ", learning rate " ++ show r
+          defaultW = ", default weight vector " ++ show wi
 
-
-main :: IO()
+main :: IO Bool
 main = do
+  putStrLn "please input default weight vector"
+  w <- getLine
+  putStrLn "Please input learning rate"
+  r <- getLine
+  putStrLn "Please input shikiichi"
+  v <- getLine
   putStrLn "Please input data"
   line <- getLine
+  putStrLn "Please input save file name"
+  fName <- getLine
   putStrLn "start lerning"
-  plotDiscriFunc ( read line :: [(Double,[Double])] ) [Title $ "perceptron: g(x)" ++ rate ++ defaultW, XRange(-2, 3), YRange(-3, 3) ]
-  epspdfPlot "./perceptrons" $ plotDiscriFunc ( read line :: [(Double,[Double])] )
+  _ <- plotDiscriFunc  (read w :: [Double]) (read r :: Double) (read v :: Double) (read line :: [(Double,[Double])]) fName
   putStrLn "done!!"
-  return ()
-    where rate = ", learning rate " ++ show r
-          defaultW = ", default weight vector " ++ show wi
+  return True
