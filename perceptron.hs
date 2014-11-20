@@ -70,15 +70,15 @@ plotDiscriFunc wi r v xs ns = plot (PNG ns) [ Function2D [Title $ "discriminal" 
 
 main :: IO Bool
 main = do
-  putStrLn "please input default weight vector"
+  putStrLn "please input default weight vector, which type is [Double]"
   w <- getLine
-  putStrLn "Please input learning rate"
+  putStrLn "Please input learning rate, which type is [Double]"
   r <- getLine
-  putStrLn "Please input shikiichi"
+  putStrLn "Please input threshould, which type is Double"
   v <- getLine
-  putStrLn "Please input data"
+  putStrLn "Please input learning data, which type is [(Double,[Double])]"
   line <- getLine
-  putStrLn "Please input save file name"
+  putStrLn "Please input save file name, which type is String"
   fName <- getLine
   putStrLn "start lerning"
   _ <- plotDiscriFunc  (read w :: [Double]) (read r :: Double) (read v :: Double) (read line :: [(Double,[Double])]) fName
