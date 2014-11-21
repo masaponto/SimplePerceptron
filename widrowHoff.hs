@@ -1,52 +1,46 @@
-import Graphics.Gnuplot.Simple
+import Graphics.EasyPlot
 import Data.List
-
--- weight
-wi :: [Double]
-wi = [-1.0, -2.0, 1.0]
-
-
--- identification rate
-r :: Double
-r = 0.2
 
 
 -- inner product
 innerP :: (Num a) => [a] -> [a] -> a
 innerP a b = sum $ zipWith (*) a b
 
---
+
+-- calcuate eerror
 calcError :: [Double] -> (Double,[Double]) -> Double
 calcError w xsi
     | fst xsi == 1 = ret - 1
     | otherwise = ret
     where ret = innerP w $ snd xsi
 
+
 -- judge is allowable error
-isEnough :: Double -> Bool
-isEnough x
-    | abs x <= 0.1 = True
+isEnough :: Double -> Double -> Bool
+isEnough e x
+    | abs x <= e = True
     | otherwise = False
 
+
 -- update
-wUpdate' :: [Double] -> [(Double, [Double])] -> [Double]
-wUpdate' w xs = zipWith (-) w $ map ((*r). innerP b ) xp
-    where b = map (calcError w) xs
+wUpdate :: [Double] -> Double -> Double -> [(Double, [Double])] -> [Double]
+wUpdate w r v xs = zipWith (-) w $ map ((r*).innerP e ) xp
+    where e = map (calcError w) xs
           xp = transpose $ map snd xs
 
 -- loop training
-loopT' :: [(Double, [Double])] -> [Double] -> [Double]
-loopT' xs w
-    | not $ all isEnough $ map (calcError w ) xs = loopT' xs $ wUpdate' w xs
+train :: [Double] -> Double -> Double -> Double -> [(Double, [Double])]-> [Double]
+train w r v e xs
+    | not $ all (isEnough e) $ map (calcError w ) xs = train (wUpdate w r v xs) r v e xs
     | otherwise = w
 
 
 -- discriminal function
-discriFunc :: [(Double,[Double])] -> Double -> Double
-discriFunc xs x = a * x + b
+discriFuncP :: [Double] -> Double -> Double -> Double -> [(Double,[Double])] -> Double -> Double
+discriFuncP wi r v e xs x = a * x + b
     where a = - (ws !! 1) / (ws !! 2)
           b = - head ws / (ws !! 2)
-          ws = loopT' xs wi
+          ws = train wi r v e xs
 
 
 -- list of data to vector
@@ -62,25 +56,34 @@ classSepa no = filter (\t -> fst t == no)
 
 
 -- plot discriminal function
-plotDiscriFunc :: [(Double,[Double])] -> [Attribute] -> IO()
-plotDiscriFunc xs attributeGraph = plotPathsStyle attributeGraph $ lineStyle ++ class1Style ++ class2Style
-    where lineStyle = [(defaultStyle {lineSpec = CustomStyle [LineTitle "discriminal"]}, discriFuncPoints)]
-          class1Style = [(defaultStyle {plotType = Points, lineSpec = CustomStyle [LineTitle "class 1", PointType 6]}, class1Points)]
-          class2Style = [(defaultStyle {plotType = Points, lineSpec = CustomStyle [LineTitle "class 2", PointType 4]}, class2Points)]
-          discriFuncPoints = zip xaxis $ map (discriFunc xs) xaxis
-          class1Points = data2vecs $ classSepa 1 xs
-          class2Points = data2vecs $ classSepa (-1) xs
-          xaxis = [-10 .. 10]
+plotDiscriFunc :: [Double] -> Double -> Double -> Double -> [(Double,[Double])] -> String -> IO Bool
+plotDiscriFunc wi r v e xs ns = plot (PNG ns) [ Function2D [Title $ "discriminal" ++ rate ++ defaultW ++ threshould, Color Red ]
+                                                           [Range (-3) 3] (discriFuncP wi r v e xs)
+                                          , Data2D [Title "class1", Color Black] [] class1Points
+                                          , Data2D [Title "class0", Color Blue] [] class0Points]
+    where class1Points = data2vecs $ classSepa 1 xs
+          class0Points = data2vecs $ classSepa 0 xs
+          defaultW = ", w =" ++ show wi
+          rate = ", r = " ++ show r
+          threshould = ", v = " ++ show v
+
 
 
 main :: IO()
 main = do
-  putStrLn "Please input data"
+  putStrLn "please input default weight vector, which type is [Double]"
+  w <- getLine
+  putStrLn "Please input learning rate, which type is [Double]"
+  r <- getLine
+  putStrLn "Please input threshould, which type is Double"
+  v <- getLine
+  putStrLn "Please input allowe error , which type is Double "
+  e <- getLine
+  putStrLn "Please input learning data, which type is [(Double,[Double])]"
   line <- getLine
+  putStrLn "Please input save file name, which type is String"
+  fName <- getLine
   putStrLn "start lerning"
-  plotDiscriFunc ( read line :: [(Double,[Double])] ) [Title $ "widrow-hoff: g(x)" ++ rate ++ defaultW, XRange(-10, 10), YRange(-10, 10) ]
-  epspdfPlot "./widrowHoff" $ plotDiscriFunc ( read line :: [(Double,[Double])] )
+  _ <- plotDiscriFunc  (read w :: [Double]) (read r :: Double) (read v :: Double) (read e :: Double) (read line :: [(Double,[Double])]) fName
   putStrLn "done!!"
   return ()
-    where rate = ", identification rate " ++ show r
-          defaultW = ", default weight vector " ++ show wi
