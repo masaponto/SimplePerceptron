@@ -5,13 +5,13 @@ innerP :: (Num a) => [a] -> [a] -> a
 innerP a b = sum $ zipWith (*) a b
 
 
--- signature
+-- step function
 step :: Double -> Double
 step n
     | n >= 0 = 1
     | otherwise = 0
 
-
+-- discriminal function
 discriFunc :: [Double] -> [Double] -> Double -> Double
 discriFunc w x v = innerP w x - v
 
@@ -30,14 +30,14 @@ isMatch w v xsi
     | otherwise = False
 
 
--- loop training
+-- training
 train :: [Double] -> Double -> Double ->  [(Double,[Double])] -> [Double]
 train w r v xs
     | not $ all (isMatch w v) xs = train (foldl (wUpdate r v) w xs) r v xs
     | otherwise = w
 
 
--- discriminal function
+-- change discriminal function for plot
 discriFuncP :: [Double] -> Double -> Double -> [(Double,[Double])] -> Double -> Double
 discriFuncP w r v xs x = a * x + b
     where a = - (ws !! 1) / (ws !! 2)
@@ -59,14 +59,15 @@ classSepa no = filter (\t -> fst t == no)
 
 -- plot discriminal function
 plotDiscriFunc :: [Double] -> Double -> Double -> [(Double,[Double])] -> String -> IO Bool
-plotDiscriFunc wi r v xs ns = plot (PNG ns) [ Function2D [Title $ "discriminal" ++ rate ++ defaultW , Color Red ]
+plotDiscriFunc wi r v xs ns = plot (PNG ns) [ Function2D [Title $ "discriminal" ++ rate ++ defaultW ++ threshould, Color Red ]
                                                            [Range (-3) 3] (discriFuncP wi r v xs)
                                           , Data2D [Title "class1", Color Black] [] class1Points
                                           , Data2D [Title "class0", Color Blue] [] class0Points]
     where class1Points = data2vecs $ classSepa 1 xs
           class0Points = data2vecs $ classSepa 0 xs
-          rate = ", learning rate " ++ show r
-          defaultW = ", default weight vector " ++ show wi
+          defaultW = ", w =" ++ show wi
+          rate = ", r = " ++ show r
+          threshould = ", v = " ++ show v
 
 main :: IO Bool
 main = do

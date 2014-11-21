@@ -1,7 +1,3 @@
-def fix_num(n)
-  return n == 0 ? -1 : 1
-end
-
 random = Random.new
 
 s = "["
