@@ -6,9 +6,9 @@ innerP a b = sum $ zipWith (*) a b
 
 
 -- step function
-step :: Double -> Double
-step n
-    | n >= 0 = 1
+step :: Double -> Double -> Double
+step n v
+    | n >= v = 1
     | otherwise = 0
 
 -- discriminal function
@@ -20,13 +20,13 @@ discriFunc w x v = innerP w x - v
 wUpdate :: Double -> Double -> [Double] -> (Double, [Double]) -> [Double]
 wUpdate r v w xsi = zipWith (+) w $ map (r * (d - y) *) $ snd xsi
     where d = fst xsi
-          y = step (discriFunc w (snd xsi) v)
+          y = step (discriFunc w (snd xsi) v) v
 
 
 -- is discriminal sucsess
 isMatch :: [Double] -> Double -> (Double, [Double]) -> Bool
 isMatch w v xsi
-    | fst xsi == step (discriFunc w (snd xsi) v)  = True
+    | fst xsi == step (discriFunc w (snd xsi) v) v = True
     | otherwise = False
 
 
