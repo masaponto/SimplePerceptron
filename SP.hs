@@ -11,6 +11,7 @@ type Vector a = [a]
 -- sum
 (/+/) :: (Fractional a) => Vector a -> Vector a -> Vector a
 (/+/) xs ys = zipWith (+) xs ys
+
 -- time
 (*/) :: (Fractional a) => a -> Vector a -> Vector a
 (*/) a xs = map (a*) xs

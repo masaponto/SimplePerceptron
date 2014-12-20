@@ -1,10 +1,4 @@
-*.pdf
-*.eps
 *.o
 *.hi
-rand.dat
-widrowHoff
-perceptron-easyplot
-perceptron
 *.png
-plot[1-9].dat
+*.dat
