@@ -25,14 +25,14 @@ step n v
 
 
 -- discriminal function
-g :: (Fractional a) => Vector a -> Vector a -> a -> a
-g w x v = w /*/ x - v
+g :: (Fractional a) => Vector a -> Vector a -> a
+g w x = w /*/ x
 
 
 -- update weight
 updateW :: (Fractional a, Ord a) => a -> a -> Vector a -> (a, Vector a) -> Vector a
 updateW r v w xs = w /+/ ( ( r * (d - y) ) */ x)
-    where y = step ( g w x v ) v
+    where y = step ( g w x ) v
           d = fst xs
           x = snd xs
 
@@ -40,7 +40,7 @@ updateW r v w xs = w /+/ ( ( r * (d - y) ) */ x)
 -- check results is correct
 isCorrect :: (Fractional a, Ord a) => Vector a -> a -> (a, Vector a) -> Bool
 isCorrect w v xs
-    | d == step (g w x v) v = True
+    | d == step (g w x) v = True
     | otherwise = False
     where d = fst xs
           x = snd xs
